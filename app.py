@@ -66,7 +66,7 @@ table = pd.DataFrame({
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
     "NAME": df_today["member_name"],
-    "Day (1/5/9/13)": df_today.get("sample_timepoint", ""),
+    "Day": df_today.get("sample_timepoint", ""),
     "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
     "RECEIVED BY": "",
