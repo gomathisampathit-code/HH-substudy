@@ -63,6 +63,7 @@ table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
     "BARCODE ID": df_today["barcode_id"],
     "Episode": df_today["episode1"],
+    "Index case": df_today["index_hh_member_id_s"],
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
