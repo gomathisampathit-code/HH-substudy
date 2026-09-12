@@ -44,6 +44,23 @@ episode_lookup = (
     .set_index("child_id")["episode1"]
 )
 
+# --- Filter to today's collected, virology-ready samples ---
+df["sample_collected"] = (
+    df["sample_collected"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
+
+df_today = df[
+    (df["submissiondate"].dt.strftime("%Y-%m-%d") == today_str)
+    & (df["sample_collected"] == "yes")
+].copy()
+
+df_today = df_today.reset_index(drop=True)
+
 # Display only existing episode IDs
 df_today["episode_display"] = (
     df_today["child_id"]
