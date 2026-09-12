@@ -57,7 +57,50 @@ def split_member(val):
 df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
 )
+# =========================================================
+# NAME DISPLAY
+# If NAME is blank, use the name from the corresponding -2 ID
+# =========================================================
 
+name_lookup = {}
+
+for _, row in df_today.iterrows():
+
+    member_id = str(row["member_id_clean"]).strip()
+    member_name = str(row["member_name"]).strip()
+
+    if (
+        member_id.endswith("-2")
+        and member_name
+        and member_name.lower() not in ["nan", "none"]
+    ):
+        base_id = member_id[:-2]
+        name_lookup[base_id] = member_name
+
+
+def get_display_name(row):
+
+    member_id = str(row["member_id_clean"]).strip()
+    member_name = str(row["member_name"]).strip()
+
+    # Name is already available
+    if (
+        member_name
+        and member_name.lower() not in ["nan", "none"]
+    ):
+        return member_name
+
+    # Name is blank -> use corresponding -2 member's name
+    if member_id in name_lookup:
+        return f"{name_lookup[member_id]}'s baby"
+
+    return ""
+
+
+df_today["display_name"] = df_today.apply(
+    get_display_name,
+    axis=1
+)
 # Create lookup: base member ID -> mother's name from "-2" member
 name_lookup = {}
 
