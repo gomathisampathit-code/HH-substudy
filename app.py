@@ -139,21 +139,6 @@ df_today["index_case_label"] = (
     .fillna("")
 )
 
-
-# =========================================================
-# FIND MOTHER NAME FOR BABY RECORDS
-#
-# Example:
-#
-# HH-42-02-2028-2   VALARMATHI
-# HH-42-02-2028     blank
-#
-# Result:
-#
-# HH-42-02-2028-2   VALARMATHI
-# HH-42-02-2028     VALARMATHI's baby
-# =========================================================
-
 name_lookup = {}
 
 for _, row in df_today.iterrows():
