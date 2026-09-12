@@ -67,6 +67,36 @@ df_today["index_case_label"] = (
     .fillna("")
 )
 
+# Create lookup for mo_name from the corresponding -2 ID
+name_lookup = {}
+
+for _, row in merged.iterrows():
+    child_id = str(row["child_id"]).strip()
+    mo_name = str(row["mo_name"]).strip()
+
+    if child_id.endswith("-2") and mo_name and mo_name.lower() != "nan":
+        base_id = child_id[:-2]
+        name_lookup[base_id] = mo_name
+
+
+# Create final display name
+def get_display_name(row):
+    current_name = str(row["mo_name"]).strip()
+    child_id = str(row["child_id"]).strip()
+
+    # If NAME is already available, use it
+    if current_name and current_name.lower() != "nan":
+        return current_name
+
+    # If NAME is blank, find the corresponding -2 member
+    if child_id in name_lookup:
+        return f"{name_lookup[child_id]}'s baby"
+
+    # If no corresponding mother name is available
+    return ""
+
+merged["DISPLAY_NAME"] = merged.apply(get_display_name, axis=1)
+
 # Final table
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
@@ -76,7 +106,7 @@ table = pd.DataFrame({
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
-    "NAME": df_today["member_name"],
+    "NAME": merged["DISPLAY_NAME"],
     "Day": df_today.get("sample_timepoint", ""),
     "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
