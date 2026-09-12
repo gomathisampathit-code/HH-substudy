@@ -76,7 +76,7 @@ table = pd.DataFrame({
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
-    "NAME": merged["member_name"],
+    "NAME": df_today["member_name"],
     "Day": df_today.get("sample_timepoint", ""),
     "S.C DATE/TIME": df_today["dt_sample"],	
     "STUDY": "",
