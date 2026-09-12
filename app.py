@@ -20,7 +20,11 @@ sheet_id = "1wZNK_uRuTlFWtS4HAS-5dvxfMZzhe0u4vwgBWkvKD-4"
 csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv"
 df = pd.read_csv(csv_url, on_bad_lines="skip")
 
-st.write("Available columns:", df.columns.tolist())
+st.write("Is episode1 present?", "episode1" in df.columns)
+st.write([col for col in df.columns if "episode" in col.lower()])
+st.write(
+    df_today[["sample_id", "member_id", "episode1"]]
+)
 
 # Normalize
 df.columns = df.columns.str.strip().str.lower()
