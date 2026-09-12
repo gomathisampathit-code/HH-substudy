@@ -58,12 +58,21 @@ df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
 )
 
+df_today["index_case_label"] = (
+    pd.to_numeric(df_today["index_case"], errors="coerce")
+    .map({
+        1: "Index",
+        2: "Contact"
+    })
+    .fillna("")
+)
+
 # Final table
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
     "BARCODE ID": df_today["barcode_id"],
     "Episode": df_today["episode1"],
-    "Index case": df_today["index_hh_member_id_s"],
+    "Index case": df_today["index_case_label"],
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
