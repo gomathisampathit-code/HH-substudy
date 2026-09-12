@@ -10,7 +10,7 @@ from openpyxl import Workbook
 st.title("🔒 RespIndNet HH Substudy Specimen Transfer Form (Virology)")
 password = st.text_input("Enter Password:", type="password")
 
-if password != "HH123":
+if password != "HH123": 
     st.warning("Please enter the correct password.")
     st.stop()
 
@@ -46,7 +46,6 @@ df_today["barcode_id"] = df_today["sample_id"]
 # Sample sequence per household member (S.PER IND)
 df_today["sample_sequence"] = df_today.groupby("member_id").cumcount() + 1
 
-
 def split_member(val):
     if pd.isna(val) or val == "":
         return "", ""
@@ -54,7 +53,6 @@ def split_member(val):
     if len(parts) == 2:
         return parts[0].strip(), parts[1].strip()
     return parts[0].strip(), ""
-
 
 df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
@@ -69,43 +67,35 @@ df_today["index_case_label"] = (
     .fillna("")
 )
 
-# --- Fill missing names for babies as "<mother's name>'s baby" ---
-# ASSUMPTION: a baby's member_id_clean shares a base ID with its mother's
-# member_id_clean, differing only by a "-2" suffix on the baby's ID
-# (e.g. mother = "1001-1", baby = "1001-2"). Adjust the suffix below if
-# your ID convention differs.
+# Create lookup for mo_name from the corresponding -2 ID
 name_lookup = {}
 
-for _, row in df_today.iterrows():
-    mid = str(row["member_id_clean"]).strip()
-    mname = str(row["member_name"]).strip()
+for _, row in merged.iterrows():
+    child_id = str(row["child_id"]).strip()
+    mo_name = str(row["mo_name"]).strip()
 
-    if mid.endswith("-2") and mname and mname.lower() != "nan":
-        base_id = mid[:-2]
-        name_lookup[base_id] = mname
+    if child_id.endswith("-2") and mo_name and mo_name.lower() != "nan":
+        base_id = child_id[:-2]
+        name_lookup[base_id] = mo_name
+v
 
-
+# Create final display name
 def get_display_name(row):
-    current_name = str(row["member_name"]).strip()
-    mid = str(row["member_id_clean"]).strip()
+    current_name = str(row["mo_name"]).strip()
+    child_id = str(row["child_id"]).strip()
 
     # If NAME is already available, use it
     if current_name and current_name.lower() != "nan":
         return current_name
 
-    # If NAME is blank, find the corresponding mother record
-    if mid in name_lookup:
-        return f"{name_lookup[mid]}'s baby"
+    # If NAME is blank, find the corresponding -2 member
+    if child_id in name_lookup:
+        return f"{name_lookup[child_id]}'s baby"
 
     # If no corresponding mother name is available
     return ""
 
-
-df_today["display_name"] = df_today.apply(get_display_name, axis=1)
-
-st.write(df.columns.tolist())
-st.write(df_today[["member_id", "episode1"]] if "episode1" in df_today.columns else "column missing")
-st.write(df.columns.tolist())
+merged["DISPLAY_NAME"] = merged.apply(get_display_name, axis=1)
 
 # Final table
 table = pd.DataFrame({
@@ -116,7 +106,7 @@ table = pd.DataFrame({
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
-    "NAME": df_today["display_name"],
+    "NAME": merged["DISPLAY_NAME"],
     "Day": df_today.get("sample_timepoint", ""),
     "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
