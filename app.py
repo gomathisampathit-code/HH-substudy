@@ -10,7 +10,7 @@ from openpyxl import Workbook
 st.title("🔒 RespIndNet HH Substudy Specimen Transfer Form (Virology)")
 password = st.text_input("Enter Password:", type="password")
 
-if password != "HH123": 
+if password != "HH123":
     st.warning("Please enter the correct password.")
     st.stop()
 
@@ -46,6 +46,7 @@ df_today["barcode_id"] = df_today["sample_id"]
 # Sample sequence per household member (S.PER IND)
 df_today["sample_sequence"] = df_today.groupby("member_id").cumcount() + 1
 
+
 def split_member(val):
     if pd.isna(val) or val == "":
         return "", ""
@@ -54,53 +55,9 @@ def split_member(val):
         return parts[0].strip(), parts[1].strip()
     return parts[0].strip(), ""
 
+
 df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
-)
-
-# =========================================================
-# NAME DISPLAY
-# If NAME is blank, use the name from the corresponding -2 ID
-# =========================================================
-
-name_lookup = {}
-
-for _, row in df_today.iterrows():
-
-    member_id = str(row["member_id_clean"]).strip()
-    member_name = str(row["member_name"]).strip()
-
-    if (
-        member_id.endswith("-2")
-        and member_name
-        and member_name.lower() not in ["nan", "none"]
-    ):
-        base_id = member_id[:-2]
-        name_lookup[base_id] = member_name
-
-
-def get_display_name(row):
-
-    member_id = str(row["member_id_clean"]).strip()
-    member_name = str(row["member_name"]).strip()
-
-    # Name is already available
-    if (
-        member_name
-        and member_name.lower() not in ["nan", "none"]
-    ):
-        return member_name
-
-    # Name is blank -> use corresponding -2 member's name
-    if member_id in name_lookup:
-        return f"{name_lookup[member_id]}'s baby"
-
-    return ""
-
-
-df_today["display_name"] = df_today.apply(
-    get_display_name,
-    axis=1
 )
 
 df_today["index_case_label"] = (
@@ -111,6 +68,40 @@ df_today["index_case_label"] = (
     })
     .fillna("")
 )
+
+# --- Fill missing names for babies as "<mother's name>'s baby" ---
+# ASSUMPTION: a baby's member_id_clean shares a base ID with its mother's
+# member_id_clean, differing only by a "-2" suffix on the baby's ID
+# (e.g. mother = "1001-1", baby = "1001-2"). Adjust the suffix below if
+# your ID convention differs.
+name_lookup = {}
+
+for _, row in df_today.iterrows():
+    mid = str(row["member_id_clean"]).strip()
+    mname = str(row["member_name"]).strip()
+
+    if mid.endswith("-2") and mname and mname.lower() != "nan":
+        base_id = mid[:-2]
+        name_lookup[base_id] = mname
+
+
+def get_display_name(row):
+    current_name = str(row["member_name"]).strip()
+    mid = str(row["member_id_clean"]).strip()
+
+    # If NAME is already available, use it
+    if current_name and current_name.lower() != "nan":
+        return current_name
+
+    # If NAME is blank, find the corresponding mother record
+    if mid in name_lookup:
+        return f"{name_lookup[mid]}'s baby"
+
+    # If no corresponding mother name is available
+    return ""
+
+
+df_today["display_name"] = df_today.apply(get_display_name, axis=1)
 
 # Final table
 table = pd.DataFrame({
