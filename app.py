@@ -20,8 +20,6 @@ sheet_id = "1wZNK_uRuTlFWtS4HAS-5dvxfMZzhe0u4vwgBWkvKD-4"
 csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv"
 df = pd.read_csv(csv_url, on_bad_lines="skip")
 
-st.write("Available columns:", df.columns.tolist())
-
 # Normalize
 df.columns = df.columns.str.strip().str.lower()
 df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce")
@@ -60,27 +58,18 @@ df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
 )
 
-df_today["index_case_label"] = (
-    pd.to_numeric(df_today["index_case"], errors="coerce")
-    .map({
-        1: "Index",
-        2: "Contact"
-    })
-    .fillna("")
-)
-
 # Final table
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
     "BARCODE ID": df_today["barcode_id"],
     "Episode": df_today["episode1"],
-    "Index case": df_today["index_case_label"],
+    "Index case": df_today["index_hh_member_id_s"],
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
     "NAME": df_today["member_name"],
     "Day": df_today.get("sample_timepoint", ""),
-    "S.C DATE/TIME": df_today["dt_sample"],	
+    "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
     "RECEIVED BY": "",
     "VOL (VIRO)": "",
