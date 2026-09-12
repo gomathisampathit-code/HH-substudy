@@ -28,18 +28,14 @@ df["submissiondate"] = df["submissiondate"].dt.tz_localize(None)
 df["dt_sample"] = pd.to_datetime(df["dt_sample"], errors="coerce")
 df["dt_sample"] = df["dt_sample"].dt.tz_localize(None)
 
-# Clean episode1
-df["episode1"] = df["episode1"].fillna("").astype(str).str.strip()
-
-# --- Filter to today's collected, virology-ready samples ---
-# sample_collected == 1 -> collected today AND always a Respiratory swab for this sub-study
-df["sample_collected"] = df["sample_collected"].astype(str).str.strip().str.lower()
-today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
-df_today = df[
-    (df["submissiondate"].dt.strftime("%Y-%m-%d") == today_str)
-    & (df["sample_collected"] == "yes")
-].copy()
-df_today = df_today.reset_index(drop=True)
+# Clean episode1 as TEXT
+df["episode1"] = (
+    df["episode1"]
+    .fillna("")
+    .astype(str)
+    .str.strip()
+    .str.replace(r"\.0$", "", regex=True)
+)
 
 # Get existing episode1 for each child_id
 episode_lookup = (
@@ -53,6 +49,8 @@ df_today["episode_display"] = (
     df_today["child_id"]
     .map(episode_lookup)
     .fillna("")
+    .astype(str)
+    .str.replace(r"\.0$", "", regex=True)
 )
 
 # Sample type is always Respiratory swab when sample_collected == 1
