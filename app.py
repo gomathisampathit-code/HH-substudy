@@ -20,9 +20,6 @@ sheet_id = "1wZNK_uRuTlFWtS4HAS-5dvxfMZzhe0u4vwgBWkvKD-4"
 csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv"
 df = pd.read_csv(csv_url, on_bad_lines="skip")
 
-st.write("Episode column exists:", "episode1" in df.columns)
-st.write("Episode values in full data:")
-st.write(df["episode1"].head(20))
 
 # Normalize
 df.columns = df.columns.str.strip().str.lower()
@@ -30,6 +27,8 @@ df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce")
 df["submissiondate"] = df["submissiondate"].dt.tz_localize(None)
 df["dt_sample"] = pd.to_datetime(df["dt_sample"], errors="coerce")
 df["dt_sample"] = df["dt_sample"].dt.tz_localize(None)
+# Clean episode1
+df["episode1"] = df["episode1"].fillna("").astype(str).str.strip()
 
 # --- Filter to today's collected, virology-ready samples ---
 # sample_collected == 1 -> collected today AND always a Respiratory swab for this sub-study
@@ -40,6 +39,8 @@ df_today = df[
     & (df["sample_collected"] == "yes")
 ].copy()
 df_today = df_today.reset_index(drop=True)
+
+st.write("Today's episode values:", df_today["episode1"].tolist())
 
 # Sample type is always Respiratory swab when sample_collected == 1
 df_today["type_of_sample"] = "Respiratory swab"
