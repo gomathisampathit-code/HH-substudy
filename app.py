@@ -57,6 +57,7 @@ def split_member(val):
 df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
 )
+
 # =========================================================
 # NAME DISPLAY
 # If NAME is blank, use the name from the corresponding -2 ID
@@ -101,45 +102,6 @@ df_today["display_name"] = df_today.apply(
     get_display_name,
     axis=1
 )
-# Create lookup: base member ID -> mother's name from "-2" member
-name_lookup = {}
-
-for _, row in df_today.iterrows():
-    member_id = str(row["member_id_clean"]).strip()
-    member_name = str(row["member_name"]).strip()
-
-    if (
-        member_id.endswith("-2")
-        and member_name
-        and member_name.lower() not in ["nan", "none"]
-    ):
-        base_id = member_id[:-2]
-        name_lookup[base_id] = member_name
-
-
-# Change only the displayed NAME
-def get_display_name(row):
-    member_id = str(row["member_id_clean"]).strip()
-    member_name = str(row["member_name"]).strip()
-
-    # If NAME is already available
-    if (
-        member_name
-        and member_name.lower() not in ["nan", "none"]
-    ):
-        return member_name
-
-    # If NAME is blank, use corresponding -2 member's name
-    if member_id in name_lookup:
-        return f"{name_lookup[member_id]}'s baby"
-
-    return ""
-
-
-df_today["display_name"] = df_today.apply(
-    get_display_name,
-    axis=1
-)
 
 df_today["index_case_label"] = (
     pd.to_numeric(df_today["index_case"], errors="coerce")
@@ -150,36 +112,6 @@ df_today["index_case_label"] = (
     .fillna("")
 )
 
-# Create lookup for mo_name from the corresponding -2 ID
-name_lookup = {}
-
-for _, row in merged.iterrows():
-    child_id = str(row["child_id"]).strip()
-    mo_name = str(row["mo_name"]).strip()
-
-    if child_id.endswith("-2") and mo_name and mo_name.lower() != "nan":
-        base_id = child_id[:-2]
-        name_lookup[base_id] = mo_name
-
-
-# Create final display name
-def get_display_name(row):
-    current_name = str(row["mo_name"]).strip()
-    child_id = str(row["child_id"]).strip()
-
-    # If NAME is already available, use it
-    if current_name and current_name.lower() != "nan":
-        return current_name
-
-    # If NAME is blank, find the corresponding -2 member
-    if child_id in name_lookup:
-        return f"{name_lookup[child_id]}'s baby"
-
-    # If no corresponding mother name is available
-    return ""
-
-merged["DISPLAY_NAME"] = merged.apply(get_display_name, axis=1)
-
 # Final table
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
@@ -189,7 +121,7 @@ table = pd.DataFrame({
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
-    "NAME": merged["display_name"],
+    "NAME": df_today["display_name"],
     "Day": df_today.get("sample_timepoint", ""),
     "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
