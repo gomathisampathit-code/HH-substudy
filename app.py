@@ -27,6 +27,7 @@ df["submissiondate"] = pd.to_datetime(df["submissiondate"], errors="coerce")
 df["submissiondate"] = df["submissiondate"].dt.tz_localize(None)
 df["dt_sample"] = pd.to_datetime(df["dt_sample"], errors="coerce")
 df["dt_sample"] = df["dt_sample"].dt.tz_localize(None)
+
 # Clean episode1
 df["episode1"] = df["episode1"].fillna("").astype(str).str.strip()
 
@@ -40,7 +41,19 @@ df_today = df[
 ].copy()
 df_today = df_today.reset_index(drop=True)
 
-st.write("Today's episode values:", df_today["episode1"].tolist())
+# Get existing episode1 for each child_id
+episode_lookup = (
+    df[df["episode1"] != ""]
+    .drop_duplicates("child_id")
+    .set_index("child_id")["episode1"]
+)
+
+# Display only existing episode IDs
+df_today["episode_display"] = (
+    df_today["child_id"]
+    .map(episode_lookup)
+    .fillna("")
+)
 
 # Sample type is always Respiratory swab when sample_collected == 1
 df_today["type_of_sample"] = "Respiratory swab"
@@ -76,7 +89,7 @@ df_today["index_case_label"] = (
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
     "BARCODE ID": df_today["barcode_id"],
-    "Episode": df_today["episode1"],
+    "Episode": df_today["episode_display"],
     "Index case": df_today["index_case_label"],
     "S.TYPE": df_today["type_of_sample"],
     "S.PER IND": df_today["sample_sequence"],
