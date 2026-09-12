@@ -105,6 +105,7 @@ df_today["display_name"] = df_today.apply(get_display_name, axis=1)
 
 st.write(df.columns.tolist())
 st.write(df_today[["member_id", "episode1"]] if "episode1" in df_today.columns else "column missing")
+st.write(df.columns.tolist())
 
 # Final table
 table = pd.DataFrame({
