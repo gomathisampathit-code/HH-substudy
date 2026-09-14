@@ -10,7 +10,7 @@ from openpyxl import Workbook
 st.title("🔒 RespIndNet HH Substudy Specimen Transfer Form (Virology)")
 password = st.text_input("Enter Password:", type="password")
 
-if password != "HH123": 
+if password != "HH123":
     st.warning("Please enter the correct password.")
     st.stop()
 
@@ -19,7 +19,6 @@ if password != "HH123":
 sheet_id = "1Ux7vXBZcEpid4_HTRYpcqTL7mQS_ZIHRtY8RLaPpa0Y"
 csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv"
 df = pd.read_csv(csv_url, on_bad_lines="skip")
-
 
 # Normalize
 df.columns = df.columns.str.strip().str.lower()
@@ -37,10 +36,14 @@ df["episode1"] = (
     .str.replace(r"\.0$", "", regex=True)
 )
 
-# Get existing episode1 for each child_id
+# --- FIX 1: Episode column should reflect the MOST RECENT entry for each
+# child_id, not just the first non-empty one found. episode1 gets updated
+# over time (e.g. blank -> "2" -> "42-02-2028-E1"); we want the latest value,
+# shown exactly as it appears in the sheet. ---
 episode_lookup = (
     df[df["episode1"] != ""]
-    .drop_duplicates("child_id")
+    .sort_values("submissiondate")
+    .drop_duplicates("child_id", keep="last")
     .set_index("child_id")["episode1"]
 )
 
@@ -61,13 +64,12 @@ df_today = df[
 
 df_today = df_today.reset_index(drop=True)
 
-# Display only existing episode IDs
+# Display only existing episode IDs (latest value, in original format)
 df_today["episode_display"] = (
     df_today["child_id"]
     .map(episode_lookup)
     .fillna("")
     .astype(str)
-    .str.replace(r"\.0$", "", regex=True)
 )
 
 # Sample type is always Respiratory swab when sample_collected == 1
@@ -89,6 +91,14 @@ def split_member(val):
 
 df_today["member_id_clean"], df_today["member_name"] = zip(
     *df_today["member_id"].map(split_member)
+)
+
+# --- FIX 2: NAME column fallback. member_id rows for the index/mother entry
+# (e.g. "HH-42-02-2085" with no ",NAME" suffix) have no name from split_member.
+# Fall back to mo_name from the sheet in those cases. ---
+df_today["member_name"] = df_today["member_name"].where(
+    df_today["member_name"].astype(str).str.strip() != "",
+    df_today["mo_name"].fillna("").astype(str).str.strip()
 )
 
 df_today["index_case_label"] = (
