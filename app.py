@@ -36,12 +36,18 @@ df["episode1"] = (
     .str.replace(r"\.0$", "", regex=True)
 )
 
-# --- FIX 1: Episode column should reflect the MOST RECENT entry for each
-# child_id, not just the first non-empty one found. episode1 gets updated
-# over time (e.g. blank -> "2" -> "42-02-2028-E1"); we want the latest value,
-# shown exactly as it appears in the sheet. ---
+# --- Episode lookup: IGNORE plain-digit episode1 entries (e.g. "2", "3").
+# Only use values already in the proper "<child_id>-E<n>" format
+# (e.g. "42-02-2085-E1"), taking the most recent one of those per child_id. ---
+def is_valid_episode_format(row):
+    ep = str(row["episode1"]).strip()
+    cid = str(row["child_id"]).strip()
+    return ep.upper().startswith(f"{cid.upper()}-E")
+
+df["episode1_valid"] = df.apply(is_valid_episode_format, axis=1)
+
 episode_lookup = (
-    df[df["episode1"] != ""]
+    df[(df["episode1"] != "") & (df["episode1_valid"])]
     .sort_values("submissiondate")
     .drop_duplicates("child_id", keep="last")
     .set_index("child_id")["episode1"]
@@ -55,8 +61,7 @@ df["sample_collected"] = (
     .str.lower()
 )
 
-#today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
-today_str = "2026-09-12"
+today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
 
 df_today = df[
     (df["submissiondate"].dt.strftime("%Y-%m-%d") == today_str)
@@ -65,7 +70,7 @@ df_today = df[
 
 df_today = df_today.reset_index(drop=True)
 
-# Display only existing episode IDs (latest value, in original format)
+# Display only existing episode IDs (already in "<child_id>-E<n>" format)
 df_today["episode_display"] = (
     df_today["child_id"]
     .map(episode_lookup)
