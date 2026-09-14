@@ -89,9 +89,13 @@ def split_member(val):
         return parts[0].strip(), parts[1].strip()
     return parts[0].strip(), ""
 
-df_today["member_id_clean"], df_today["member_name"] = zip(
-    *df_today["member_id"].map(split_member)
-)
+if len(df_today) > 0:
+    df_today["member_id_clean"], df_today["member_name"] = zip(
+        *df_today["member_id"].map(split_member)
+    )
+else:
+    df_today["member_id_clean"] = pd.Series(dtype=str)
+    df_today["member_name"] = pd.Series(dtype=str)
 
 # --- FIX 2: NAME column fallback. member_id rows for the index/mother entry
 # (e.g. "HH-42-02-2085" with no ",NAME" suffix) have no name from split_member.
