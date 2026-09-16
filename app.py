@@ -107,10 +107,19 @@ else:
 # --- FIX 2: NAME column fallback. member_id rows for the index/mother entry
 # (e.g. "HH-42-02-2085" with no ",NAME" suffix) have no name from split_member.
 # Fall back to mo_name from the sheet in those cases. ---
-df_today["member_name"] = df_today["member_name"].where(
-    df_today["member_name"].astype(str).str.strip() != "",
-    df_today["mo_name"].fillna("").astype(str).str.strip()
-)
+def name_or_baby_fallback(member_name, mo_name):
+    member_name = str(member_name).strip()
+    if member_name != "":
+        return member_name
+    mo_name = str(mo_name).strip()
+    if mo_name != "" and mo_name.lower() != "nan":
+        return f"{mo_name}'s Baby"
+    return ""
+ 
+df_today["member_name"] = [
+    name_or_baby_fallback(mn, mo)
+    for mn, mo in zip(df_today["member_name"], df_today["mo_name"])
+]
 
 df_today["index_case_label"] = (
     pd.to_numeric(df_today["index_case"], errors="coerce")
