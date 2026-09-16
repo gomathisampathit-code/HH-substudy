@@ -133,10 +133,10 @@ df_today["index_case_label"] = (
 df_today["day_case_label"] = (
     pd.to_numeric(df_today["sample_timepoint"], errors="coerce")
     .map({
-        1: "Day 1",
-        2: "Day 5",
-        3: "Day 9",
-        4: "Day 13"
+        1: "1",
+        2: "5",
+        3: "9",
+        4: "13"
     })
     .fillna("")
 )
