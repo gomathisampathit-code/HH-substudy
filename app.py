@@ -61,7 +61,8 @@ df["sample_collected"] = (
     .str.lower()
 )
 
-today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
+#today_str = pd.Timestamp.today().strftime("%Y-%m-%d")
+today_str = "2026-09-15"
 
 df_today = df[
     (df["submissiondate"].dt.strftime("%Y-%m-%d") == today_str)
