@@ -130,6 +130,17 @@ df_today["index_case_label"] = (
     .fillna("")
 )
 
+df_today["day_case_label"] = (
+    pd.to_numeric(df_today["sample_timepoint"], errors="coerce")
+    .map({
+        1: "Day 1",
+        2: "Day 5",
+        3: "Day 9",
+        4: "Day 13"
+    })
+    .fillna("")
+)
+
 # Final table
 table = pd.DataFrame({
     "S.NO": range(1, len(df_today) + 1),
@@ -140,7 +151,7 @@ table = pd.DataFrame({
     "S.PER IND": df_today["sample_sequence"],
     "HH substudy member ID": df_today["member_id_clean"],
     "NAME": df_today["member_name"],
-    "Day": df_today.get("sample_timepoint", ""),
+    "Day": df_today.["day_case_label"],
     "S.C DATE/TIME": df_today["dt_sample"],
     "STUDY": "",
     "RECEIVED BY": "",
